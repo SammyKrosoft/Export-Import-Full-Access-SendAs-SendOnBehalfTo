@@ -190,8 +190,9 @@ $DebugPreference = "Continue"
 # Set Error Action to your needs
 $ErrorActionPreference = "SilentlyContinue"
 #Script Version
-$ScriptVersion = "1.8.1"
+$ScriptVersion = "1.8.2"
 <# Version changes
+v1.8.2 - fixed Get-Mailbox -Database $Database to include double quotes for database names with spaces in it
 v1.8.1 - fixed OutputFile parameter to be included in both NormalRun and DLOnly parameters set
 v1.8 - fixed issue exporting Send As for Distribugion Groups (was trying to reference $DL.Identity but selected
 ALIAS, Send AS and Send On Behalf permissions only, forgot to add Identity in the Select)
