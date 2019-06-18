@@ -369,7 +369,6 @@ If (!(Test-Path $InputFile)){
     $PermissionsMAP = Import-CSV $InputFile
 }
 
-
 ############################## Processing the MAP to re-add permissions the the target objects ##########################
 Foreach ($Item in $PermissionsMAP) {
     #Retrieve each mailbox object and storing it in a temporary variable
