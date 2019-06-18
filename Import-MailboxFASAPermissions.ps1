@@ -102,7 +102,7 @@
 #>
 [CmdLetBinding(DefaultParameterSetName = "NormalRun")]
 Param(
-    [Parameter(Mandatory = $false, Position = 1, ParameterSetName = "NormalRun")][string]$InputFile=".\sample.csv",
+    [Parameter(Mandatory = $true, Position = 1, ParameterSetName = "NormalRun")][string]$InputFile=".\sample.csv",
     [Parameter(Mandatory = $false, Position = 2, ParameterSetName = "NormalRun")][switch]$Execute,
     [Parameter(Mandatory = $false, Position = 3, ParameterSetName = "NormalRun")][string]$TargetDomain,
     [Parameter(Mandatory = $false, Position = 4, ParameterSetName = "CheckOnly")][switch]$CheckVersion
