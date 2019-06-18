@@ -175,10 +175,10 @@
 Param(
     [Parameter(Mandatory = $false, Position = 0, ParameterSetName = "NormalRun")][switch]$SharedMailboxes,
     [Parameter(Mandatory = $false, Position = 1, ParameterSetName = "NormalRun")][switch]$ResourceMailboxes,
-    [Parameter(Mandatory = $false, Position = 3, ParameterSetName = "DLOnly")][Switch]$DistributionGroupsOnly,
-    [Parameter(Mandatory = $false, Position = 4, ParameterSetName = "DLOnly")][boolean]$IncludeDynamic=$true,
-    [Parameter(Mandatory = $false, Position = 5, ParameterSetName = "NormalRun")][Parameter(ParameterSetName = "DLOnly")][string]$OutputFile,
-    [Parameter(Mandatory = $false, Position = 6, ParameterSetName = "CheckOnly")][switch]$CheckVersion
+    [Parameter(Mandatory = $false, Position = 2, ParameterSetName = "DLOnly")][Switch]$DistributionGroupsOnly,
+    [Parameter(Mandatory = $false, Position = 3, ParameterSetName = "DLOnly")][boolean]$IncludeDynamic=$true,
+    [Parameter(Mandatory = $false, Position = 4, ParameterSetName = "NormalRun")][Parameter(ParameterSetName = "DLOnly")][string]$OutputFile,
+    [Parameter(Mandatory = $false, Position = 5, ParameterSetName = "CheckOnly")][switch]$CheckVersion
 )
 
 <# ------- SCRIPT_HEADER (Only Get-Help comments and Param() above this point) ------- #>
