@@ -1,3 +1,15 @@
+<#PSScriptInfo
+
+.VERSION 1.8.2
+
+.GUID 1391bc32-575f-4ec5-8e73-a3ba548203b6
+
+.AUTHOR SammyKrosoft
+
+.COMPANYNAME SammykroSoft
+
+#>
+
 <#
 .SYNOPSIS
     Export Exchange Mailbox Send As, Full Access, and Send On Behalf permissions
