@@ -29,7 +29,7 @@
     The Output CSV file will contain the following information for each mailbox permissions
     information exported:
     
-     Display Name, Primary SMTP Address, Full Access permissions, Send As permissions, Send On Behalf permissions
+    Display Name, Primary SMTP Address, Full Access permissions, Send As permissions, Send On Behalf permissions
 
     The permissions can have one or more entries, which will be separated by semicolons (";")
 
