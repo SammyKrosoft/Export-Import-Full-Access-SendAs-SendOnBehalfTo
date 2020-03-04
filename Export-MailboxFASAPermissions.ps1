@@ -1,6 +1,6 @@
 <#PSScriptInfo
 
-.VERSION 1.8.2
+.VERSION 1.9
 
 .GUID 1391bc32-575f-4ec5-8e73-a3ba548203b6
 
@@ -190,7 +190,8 @@ Param(
     [Parameter(Mandatory = $false, Position = 2, ParameterSetName = "DLOnly")][Switch]$DistributionGroupsOnly,
     [Parameter(Mandatory = $false, Position = 3, ParameterSetName = "DLOnly")][boolean]$IncludeDynamic=$true,
     [Parameter(Mandatory = $false, Position = 4, ParameterSetName = "NormalRun")][Parameter(ParameterSetName = "DLOnly")][string]$OutputFile,
-    [Parameter(Mandatory = $false, Position = 5, ParameterSetName = "CheckOnly")][switch]$CheckVersion
+    [Parameter(Mandatory = $false, ParameterSetName = "MailboxList")][string[]]$MailboxList,
+    [Parameter(Mandatory = $false, Position = 6, ParameterSetName = "CheckOnly")][switch]$CheckVersion
 )
 
 <# ------- SCRIPT_HEADER (Only Get-Help comments and Param() above this point) ------- #>
@@ -204,6 +205,7 @@ $ErrorActionPreference = "SilentlyContinue"
 #Script Version
 $ScriptVersion = "1.8.2"
 <# Version changes
+v1.9 - added ability to search one or more mailboxes based on a list -MailboxList parameter
 v1.8.2 - fixed Get-Mailbox -Database $Database to include double quotes for database names with spaces in it
 v1.8.1 - fixed OutputFile parameter to be included in both NormalRun and DLOnly parameters set
 v1.8 - fixed issue exporting Send As for Distribugion Groups (was trying to reference $DL.Identity but selected
@@ -444,6 +446,84 @@ If ($DistributionGroupsOnly){
 
         $report += $Obj
     }
+} ElseIf ($MailboxList){
+    # ADDING THE -MAILBOXLIST PARAMETER TREATMENT
+    # NOTE: The below code for this ElseIf block is copied from the last Else {} block below, 
+    #instead of taking all mailboxes from all databases, taking the list of mailboxes specified by the -MailboxList parameter aka $MailboxList variable
+    $MailboxListCount = $MailboxList.Count
+    Log "Using -MailboxList parameter, checking mailboxes from that list ($MailboxListCount mailboxes in the list)"
+    Foreach ($CurMailbox in $MailboxList){
+         Log "Processing mailbox $CurMailbox"
+         Try {
+            $Mailbox = Get-mailbox $CurMailbox -ErrorAction STOP
+            Log "SUCCESS - Successfully located mailbox $CurMailbox: its primary SMTP address is : $($Mailbox.PrimarySMTPAddress)"
+         } Catch {
+            Log "ERROR - Something wrong happened trying to locate mailbox $CurMailbox. Wrong mailbox ID ... tried another mailbox ID (SMTP address, display name, DN,...)"
+            Continue
+         }
+         Log "Working on mailbox $($Mailbox.DisplayName) which Primary SMTP is $($Mailbox.primarySMTPAddress.ToString())" Blue
+         $SendAs=Get-ADPermission $mailbox.identity | ?{($_.extendedrights -like "*send-as*") -and ($_.isinherited -like "false") -and ($_.User -notlike "NT Authority\self")}
+         $FullAccess=Get-MailboxPermission $Mailbox | ?{($_.AccessRights -like "*fullaccess*") -and ($_.User -notlike "*nt authority\self*") -and ($_.User -notlike "*nt authority\system*") -and ($_.User -notlike "*Exchange Trusted Subsystem*") -and ($_.User -notlike "*Exchange Servers*") -and ($_.IsInherited -like "false")}
+         $SendOnBehalf = $mailbox | Select Alias, @{Name='GrantSendOnBehalfTo';Expression={[string]::join(";", ($_.GrantSendOnBehalfTo))}}
+         #Initializing a new Powershell object to store our discovered properties
+         $Obj = New-Object PSObject
+         #Populating basic mailbox info to bind with SendAs / FullMailbox / SendOnBehalf permissions
+         $Obj | Add-Member -MemberType NoteProperty -Name "DisplayName" -Value $Mailbox.DisplayName
+         $obj | Add-Member -MemberType NoteProperty -Name "PrimarySMTPAddress" -Value $Mailbox.PrimarySMTPAddress.ToString()
+         
+         If (IsEmpty $SendAs){
+             Log "No custom Send As permissions detected"
+             $Obj | Add-Member -MemberType NoteProperty -Name "SendAsPermissions" -Value ""
+         } Else {
+             Log "Found one or more SendAs Permission ! Dumping ..." Red
+             [array]$UsersWithSendAs = @()
+             ForEach($SAright in $SendAs){$UsersWithSendAs += ($SARight.User.ToString())}
+             $strUsersWithSendAs = $UsersWithSendAs -join ";"
+             $Obj | Add-Member -MemberType NoteProperty -Name "SendAsPermissions" -Value $strUsersWithSendAs
+         }
+
+         If (IsEmpty $FullAccess){
+             Log "No custom Full Access permissions detected"
+             $Obj | Add-Member -MemberType NoteProperty -Name "FullAccessPermissions" -Value ""
+         }  else {
+             Log "Found one or more Full Access Permission ! Dumping ..." Blue
+             [array]$UsersWithFullAccess = @()
+             ForEach ($FARight in $FullAccess) {$UsersWithFullAccess += ($FARight.User.ToString())}
+             $strUsersWithFullAccess = $UsersWithFullAccess -join ";"
+             $Obj | Add-Member -MemberType NoteProperty -Name "FullAccessPermissions" -Value $strUsersWithFullAccess
+         }
+         
+         If (IsEmpty ($SendOnBehalf.GrantSendOnBehalfTo)){
+             Log "No custom SendOnBehalf permissions detected"
+             $Obj | Add-Member -MemberType NoteProperty -Name "SendOnBehalfPermissions" -Value ""
+         } else {
+             Log "Found one or more SendOnBehalf Permission ! Dumping ..." Blue
+             $TableOfSendOnBehalfToConvert = $($SendOnBehalf.GrantSendOnBehalfTo) -Split (";")
+             $SMTPAddressesOfSendOnBehalf = @()
+             Foreach ($entry in $TableOfSendOnBehalfToConvert) {
+                 #Since the GrantSendOnBehalfTo entries HAVE to be mailbox-enabled users or mail enabled user or groups,
+                 #Getting primary SMTP address for each object, and storing these as a string separated by semicolon
+                 #to replace the string of DOMAIN/OU1/OU2/Name separated by semicolon
+                 $SMTPAddressesOfSendOnBehalf += (Get-Recipient $Entry).primarySMTPAddress
+             }
+             $SendOnBehalfConverted = $SMTPAddressesOfSendOnBehalf -join ";"
+             $Obj | Add-Member -MemberType NoteProperty -Name "SendOnBehalfPermissions" -Value $SendOnBehalfConverted
+         }
+         #Appending the current object into the $report variable (it's an array, remember)
+         $report += $Obj
+
+         #Cleaning the variables now before the next loop...
+         $SendOnBehalfConverted = $null
+         $obj = $Null
+         $SMTPAddressesOfSendOnBehalf = $null
+         $TableOfSendOnBehalfToConvert = $null
+         $SendOnBehalfConverted = $null
+         $SendAs = $null
+         $FullAccess = $null
+         $SendOnBehalf = $null
+         #... add more later
+    }
+
 } Else {
     Log "Beginning routing to dump mailbox Send As, Full Access, and Send On Behalf permissions"
     Log "Getting all databases"
