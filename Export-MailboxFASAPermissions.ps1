@@ -448,7 +448,7 @@ If ($DistributionGroupsOnly){
     }
 } ElseIf ($MailboxList){
     # ADDING THE -MAILBOXLIST PARAMETER TREATMENT
-    # NOTE: The below code for this ElseIf block is copied from the last Else {} block below, 
+    # NOTE: The below code for this ElseIf {} block is copied from the last Else {} block below, 
     #instead of taking all mailboxes from all databases, taking the list of mailboxes specified by the -MailboxList parameter aka $MailboxList variable
     $MailboxListCount = $MailboxList.Count
     Log "Using -MailboxList parameter, checking mailboxes from that list ($MailboxListCount mailboxes in the list)"
@@ -456,9 +456,10 @@ If ($DistributionGroupsOnly){
          Log "Processing mailbox $CurMailbox"
          Try {
             $Mailbox = Get-mailbox $CurMailbox -ErrorAction STOP
-            Log "SUCCESS - Successfully located mailbox $CurMailbox: its primary SMTP address is : $($Mailbox.PrimarySMTPAddress)"
+            Log "SUCCESS - Successfully located mailbox $CurMailbox : its primary SMTP address is : $($Mailbox.PrimarySMTPAddress)"
          } Catch {
-            Log "ERROR - Something wrong happened trying to locate mailbox $CurMailbox. Wrong mailbox ID ... tried another mailbox ID (SMTP address, display name, DN,...)"
+            Log "ERROR - Something wrong happened trying to locate mailbox $CurMailbox . Wrong mailbox ID ... tried another mailbox ID (SMTP address, display name, DN,...)"
+            Log "ERROR - Skipping mailbox $CurMailbox"
             Continue
          }
          Log "Working on mailbox $($Mailbox.DisplayName) which Primary SMTP is $($Mailbox.primarySMTPAddress.ToString())" Blue
