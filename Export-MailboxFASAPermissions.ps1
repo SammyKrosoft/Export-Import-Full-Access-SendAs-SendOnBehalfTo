@@ -1,6 +1,6 @@
 <#PSScriptInfo
 
-.VERSION 1.9
+.VERSION 1.9.1
 
 .GUID 1391bc32-575f-4ec5-8e73-a3ba548203b6
 
@@ -203,8 +203,9 @@ $DebugPreference = "Continue"
 # Set Error Action to your needs
 $ErrorActionPreference = "SilentlyContinue"
 #Script Version
-$ScriptVersion = "1.8.2"
+$ScriptVersion = "1.9.1"
 <# Version changes
+v1.9.1 - just forgot 
 v1.9 - added ability to search one or more mailboxes based on a list -MailboxList parameter
 v1.8.2 - fixed Get-Mailbox -Database $Database to include double quotes for database names with spaces in it
 v1.8.1 - fixed OutputFile parameter to be included in both NormalRun and DLOnly parameters set
